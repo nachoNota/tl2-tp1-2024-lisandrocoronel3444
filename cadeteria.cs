@@ -15,6 +15,7 @@ public class Cadeteria{
         listaCadetes = lista;
 
     }
+    public Cadeteria(){}
 
 
 

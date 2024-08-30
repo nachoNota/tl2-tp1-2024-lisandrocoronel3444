@@ -2,24 +2,24 @@
 namespace cadete;
 using pedidos;
 public class Cadete{
-    private int id;
+    private int id{get; set;}
 
-    public string nombre;
+    public string nombre{get; set;}
 
-    private string direccionCadete;
+    public string direccionCadete{get; set;}
 
-    private int telefono;
-
-    private List<Pedidos> pedidos;
-
+    private int telefono{get; set;}
+    
 
 
-    public Cadete(int id, string nombre, string direccionCadete, int telefono, List<Pedidos> pedidos){
+
+
+    public Cadete(int id, string nombre, string direccionCadete, int telefono){
         this.id = id;
         this.nombre = nombre;
         this.direccionCadete = direccionCadete;
         this.telefono = telefono;
-        this.pedidos = pedidos;
+        
 
     }
 

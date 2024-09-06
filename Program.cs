@@ -29,7 +29,36 @@ c) cambiarlos de estado
 d) reasignar el pedido a otro cadete.
 D) Mostrar un informe de pedidos al finalizar la jornada que incluya el monto ganado
 y la cantidad de envíos de cada cadete y el total. Muestre también la cantidad de
-envíos promedio por cadete*/
+envíos promedio por cadete
+
+
+
+
+Refactorización del Sistema para una Cadeteria
+El cliente presentó como nuevo requisito que los pedidos puedan no estar asignados a
+algún cadete. Esto evidenció una falla en el diseño de clases del sistema, por lo que se decidió
+realizar una refactorización del mismo.
+Para poder cumplir con dicho requisito se propuso las siguientes modificaciones:
+● Quitar el ListadoPedidos de la clase Cadete
+● Agregar una referencia a Cadete dentro de la clase Pedido
+● Agregar ListadoPedidos en la clase Cadeteria que contenga todo los pedidos que
+se vayan generando.
+● Agregar el método JornalACobrar en la clase Cadeteria que recibe como
+parámetro el id del cadete y devuelve el monto a cobrar para dicho cadete
+● Agregar el método AsignarCadeteAPedido en la clase Cadeteria que recibe como
+parámetro el id del cadete y el id del Pedido
+i) Implemente las modificaciones sugeridas más todas aquellas que crea necesarias
+para cumplir con los requerimientos.
+ii) Modifique la interfaz de usuario para cumplir con los nuevos requerimientos.
+3) Se desea migrar además la carga de datos inicial a un archivo Json, sin perder la posibilidad
+de seguir accediendo a los datos guardados en el archivo csv. Para ello se propone un nuevo
+diseño de acceso a datos basado en los principios de herencia y polimorfismo.
+Este nuevo diseño consta de una clase base llamada AccesoADatos y dos clases derivadas
+llamadas AccesoCSV y AccesoJSON, donde se implementaran.
+Refactorizar la clase AccesoADatos (que implementó en el práctico anterior) para que ésta
+cumpla con lo solicitado.
+Modifique la interfaz de usuario para que al inicio del sistema se pida que tipo de acceso usar
+(CSV o JSON). y en función de esto instanciar el objeto a datos adecuado.*/
 
 string archivoCadeteria = "cadeteria.csv";
 Cadeteria nuevaCadeteria = null;
@@ -47,7 +76,6 @@ if (lines.Length > 0)
 }
 string archivoCadete = "cadetes.csv";
 List<Cadete> cadeteLista = new List<Cadete>();
-List<Pedido> pedidosNOAsignados = new List<Pedido>();
 string[] lineaCadetes = File.ReadAllLines(archivoCadete);
 foreach (var lineaDatos in lineaCadetes)
 {
@@ -82,20 +110,70 @@ while (true)
     {
         case "1":
             Pedido nuevoPedido = CrearPedido();
-            pedidosNOAsignados.Add(nuevoPedido);
+            nuevaCadeteria.todosLosPedidos.Add(nuevoPedido);
             Console.WriteLine("Pedido creado exitosamente.");
             break;
         case "2":
-            AsignarPedidoACadete(pedidosNOAsignados, nuevaCadeteria.listaCadetes);
+            Console.WriteLine("Seleccione el número del pedido a asignar:");
+            foreach (var pedido in nuevaCadeteria.todosLosPedidos)
+            {
+                Console.WriteLine($"Número de pedido: {pedido.numeroPedido}");
+            }
+
+            // Leer el número de pedido del usuario
+            int numeroAsignacion;
+            if (!Int32.TryParse(Console.ReadLine(), out numeroAsignacion))
+            {
+                Console.WriteLine("Número de pedido inválido.");
+                return;
+            }
+            Console.WriteLine("Seleccione el ID del cadete que llevara el pedido");
+            foreach (var cadete in nuevaCadeteria.listaCadetes)
+            {
+                Console.WriteLine($"Número de ID: {cadete.id} - Nombre: {cadete.nombre}");
+            }
+            int cadeteID;
+            if (!Int32.TryParse(Console.ReadLine(), out cadeteID))
+            {
+                Console.WriteLine("Número de pedido inválido.");
+                return;
+            }
+            nuevaCadeteria.AsignarCadeteAPedido(cadeteID, numeroAsignacion);
             break;
         case "3":
-            CambiarEstadoPedido(pedidosNOAsignados);
+            CambiarEstadoPedido(nuevaCadeteria.todosLosPedidos);
             break;
         case "4":
-            ReasignarPedidoACadete(pedidosNOAsignados, nuevaCadeteria.listaCadetes);
+            Console.WriteLine("Seleccione el número del pedido a reasignar:");
+            foreach (var pedido in nuevaCadeteria.todosLosPedidos)
+            {
+                Console.WriteLine($"Número de pedido: {pedido.numeroPedido}");
+            }
+            int numero;
+            if (!Int32.TryParse(Console.ReadLine(), out numero))
+            {
+                Console.WriteLine("Número de pedido inválido.");
+                return;
+            }
+            Console.WriteLine("Seleccione el ID del cadete que llevara el pedido");
+            foreach (var cadete in nuevaCadeteria.listaCadetes)
+            {
+                Console.WriteLine($"Número de ID: {cadete.id} - Nombre: {cadete.nombre}");
+            }
+            int cadeteId;
+            if (!Int32.TryParse(Console.ReadLine(), out cadeteId))
+            {
+                Console.WriteLine("Número de pedido inválido.");
+                return;
+            }
+            nuevaCadeteria.reasignarPedido(numero, cadeteId);
+            
             break;
         case "5":
-            MostrarInforme(nuevaCadeteria.listaCadetes);
+            foreach(var cadetes in nuevaCadeteria.listaCadetes){
+                nuevaCadeteria.JornalACobrar(cadetes.id);
+            }
+             
             break;
         case "6":
             return; // Salir del programa
@@ -103,7 +181,7 @@ while (true)
             Console.WriteLine("Opción inválida. Intente nuevamente.");
             break;
     }
-    
+
 }
 
 
@@ -129,82 +207,7 @@ static Pedido CrearPedido()
     // Crear un nuevo pedido
     return new Pedido(numeroPedido, observaciones, nombreCliente, direccionCliente, telefonoCliente);
 }
-static void AsignarPedidoACadete(List<Pedido> pedidosLista, List<Cadete> cadetesLista)
-{
-    Console.WriteLine("Seleccione el número del pedido a asignar:");
 
-    // Mostrar los pedidos disponibles
-    foreach (var pedido in pedidosLista)
-    {
-        Console.WriteLine($"Número de pedido: {pedido.numeroPedido}");
-    }
-
-    // Leer el número de pedido del usuario
-    int numeroAsignacion;
-    if (!Int32.TryParse(Console.ReadLine(), out numeroAsignacion))
-    {
-        Console.WriteLine("Número de pedido inválido.");
-        return;
-    }
-
-    // Buscar el pedido seleccionado
-    Pedido pedidoSeleccionado = null;
-    foreach (var pedido in pedidosLista)
-    {
-        if (pedido.numeroPedido == numeroAsignacion)
-        {
-            pedidoSeleccionado = pedido;
-            break;
-        }
-    }
-
-    if (pedidoSeleccionado == null)
-    {
-        Console.WriteLine("Pedido no encontrado.");
-        return;
-    }
-
-    Console.WriteLine("Seleccione el ID del cadete al que asignar el pedido:");
-
-    // Mostrar los cadetes disponibles
-    foreach (var cadete in cadetesLista)
-    {
-        Console.WriteLine($"ID Cadete: {cadete.id} - Nombre: {cadete.nombre}");
-    }
-
-    // Leer el ID del cadete del usuario
-    int idCadete;
-    if (!Int32.TryParse(Console.ReadLine(), out idCadete))
-    {
-        Console.WriteLine("ID de cadete inválido.");
-        return;
-    }
-
-    // Buscar el cadete seleccionado
-    Cadete cadeteSeleccionado = null;
-    foreach (var cadete in cadetesLista)
-    {
-        if (cadete.id == idCadete)
-        {
-            cadeteSeleccionado = cadete;
-            break;
-        }
-    }
-
-    if (cadeteSeleccionado == null)
-    {
-        Console.WriteLine("Cadete no encontrado.");
-        return;
-    }
-
-    // Asignar el pedido al cadete
-    cadeteSeleccionado.AgregarPedido(pedidoSeleccionado);
-
-    // Opcional: Eliminar el pedido de la lista de pedidos
-    pedidosLista.Remove(pedidoSeleccionado);
-
-    Console.WriteLine("Pedido asignado exitosamente.");
-}
 static void CambiarEstadoPedido(List<Pedido> pedidosLista)
 {
     Console.WriteLine("Seleccione el número del pedido cuyo estado desea cambiar:");
@@ -257,109 +260,4 @@ static void CambiarEstadoPedido(List<Pedido> pedidosLista)
     pedidoSeleccionado.Estado = (EstadoPedido)(nuevaOpcionEstado - 1);
 
     Console.WriteLine("Estado del pedido actualizado exitosamente.");
-}
-static void ReasignarPedidoACadete(List<Pedido> pedidosLista, List<Cadete> cadetesLista)
-{
-    Console.WriteLine("Seleccione el número del pedido a reasignar:");
-
-    // Mostrar los pedidos disponibles
-    foreach (var pedido in pedidosLista)
-    {
-        Console.WriteLine($"Número de pedido: {pedido.numeroPedido}");
-    }
-
-    // Leer el número de pedido del usuario
-    int numeroPedido;
-    if (!Int32.TryParse(Console.ReadLine(), out numeroPedido))
-    {
-        Console.WriteLine("Número de pedido inválido.");
-        return;
-    }
-
-    // Buscar el pedido seleccionado
-    Pedido pedidoSeleccionado = null;
-    foreach (var pedido in pedidosLista)
-    {
-        if (pedido.numeroPedido == numeroPedido)
-        {
-            pedidoSeleccionado = pedido;
-            break;
-        }
-    }
-
-    if (pedidoSeleccionado == null)
-    {
-        Console.WriteLine("Pedido no encontrado.");
-        return;
-    }
-
-    Console.WriteLine("Seleccione el ID del nuevo cadete al que reasignar el pedido:");
-
-    // Mostrar los cadetes disponibles
-    foreach (var cadete in cadetesLista)
-    {
-        Console.WriteLine($"ID Cadete: {cadete.id} - Nombre: {cadete.nombre}");
-    }
-
-    // Leer el ID del nuevo cadete del usuario
-    int idCadete;
-    if (!Int32.TryParse(Console.ReadLine(), out idCadete))
-    {
-        Console.WriteLine("ID de cadete inválido.");
-        return;
-    }
-
-    // Buscar el nuevo cadete seleccionado
-    Cadete nuevoCadete = null;
-    foreach (var cadete in cadetesLista)
-    {
-        if (cadete.id == idCadete)
-        {
-            nuevoCadete = cadete;
-            break;
-        }
-    }
-
-    if (nuevoCadete == null)
-    {
-        Console.WriteLine("Cadete no encontrado.");
-        return;
-    }
-
-    // Reasignar el pedido al nuevo cadete
-    // Primero, eliminar el pedido del cadete actual (si es necesario)
-    // Nota: Asumiendo que el Pedido ya está asignado a un Cadete y el Cadete tiene una lista de Pedidos.
-    foreach (var cadete in cadetesLista)
-    {
-        if (cadete.HasPedido(pedidoSeleccionado.numeroPedido))
-        {
-            cadete.RemoverPedido(pedidoSeleccionado.numeroPedido);
-            break;
-        }
-    }
-
-    // Asignar el pedido al nuevo cadete
-    nuevoCadete.AgregarPedido(pedidoSeleccionado);
-
-    Console.WriteLine("Pedido reasignado exitosamente.");
-}
-static void MostrarInforme(List<Cadete> cadetesLista)
-{
-    int totalPedidosEntregados = 0;
-    double totalMontoGanado = 0;
-
-    foreach (var cadete in cadetesLista)
-    {
-        int pedidosEntregados = cadete.GetPedidosEntregados();
-        totalPedidosEntregados += pedidosEntregados;
-        totalMontoGanado += pedidosEntregados * 500;
-
-        Console.WriteLine($"Cadete ID: {cadete.id} - Nombre: {cadete.nombre} - Pedidos Entregados: {pedidosEntregados}");
-    }
-
-    double promedioEnvios = cadetesLista.Count > 0 ? (double)totalPedidosEntregados / cadetesLista.Count : 0;
-
-    Console.WriteLine($"Total de Pedidos Entregados: {totalPedidosEntregados}");
-    Console.WriteLine($"Total Monto Ganado: ${totalMontoGanado}");
-    Console.WriteLine($"Promedio de Envíos por Cadete: {promedioEnvios:F2}");
 }

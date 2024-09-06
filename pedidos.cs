@@ -1,5 +1,6 @@
 namespace pedidos;
 using cliente;
+using cadete;
 public enum EstadoPedido
 {
     Pendiente = 0,
@@ -12,6 +13,9 @@ public class Pedido{
 
     private  Cliente cliente;
     public EstadoPedido Estado { get; set; }
+
+    public Cadete cadeteAsignado{get; set;}
+    
     
     
     
@@ -21,6 +25,7 @@ public class Pedido{
         this.numeroPedido = numeroPedido;
         Estado = EstadoPedido.Pendiente;
         this.observaciones = observaciones;
+        
         
     }
 
@@ -32,6 +37,7 @@ public class Pedido{
         Console.WriteLine("Nombre del cliente: " + cliente.Nombre + "Telefono del cliente: " + cliente.Telefono);
 
     }
+    
 
 
 }

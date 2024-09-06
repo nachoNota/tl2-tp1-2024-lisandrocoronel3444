@@ -1,22 +1,29 @@
 namespace pedidos;
 using cliente;
-
-public class Pedidos{
-    private int numeroPedido{get; set;}
+public enum EstadoPedido
+{
+    Pendiente = 0,
+    EnProceso = 1,
+    Entregado = 2
+}
+public class Pedido{
+    public int numeroPedido{get; set;}
     private string observaciones{get; set;}
 
     private  Cliente cliente;
-
-    private  string estado{get; set;}
+    public EstadoPedido Estado { get; set; }
     
     
+    
 
-    public Pedidos(int numeroPedido, string observaciones, string estado, string nombre, string direccionCliente, int telefono){
+    public Pedido(int numeroPedido, string observaciones, string nombre, string direccionCliente, int telefono){
         cliente = new Cliente(nombre, direccionCliente ,telefono);
         this.numeroPedido = numeroPedido;
+        Estado = EstadoPedido.Pendiente;
         this.observaciones = observaciones;
-        this.estado = estado;
+        
     }
+
     public void verDireccionCliente(){
         Console.WriteLine("La direccion del cliente es: " + cliente.Direccion);
         

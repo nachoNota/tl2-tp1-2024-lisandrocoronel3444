@@ -1,21 +1,20 @@
 namespace cadeteria;
 using cadete;
-
+using pedidos;
 
 public class Cadeteria{
 
-    private string nombre{get; set;}
-    private int telefono{get; set;}
+    public string nombre{get; set;}
+    public int telefono{get; set;}
 
-    private List<Cadete> listaCadetes{get; set;}
+    public List<Cadete> listaCadetes{get; set;} = new List<Cadete>();
 
-    public Cadeteria(string nombre, int telefono, List<Cadete> lista){
+    public Cadeteria(string nombre, int telefono){
         this.nombre = nombre;
         this.telefono = telefono;
-        listaCadetes = lista;
 
     }
-    public Cadeteria(){}
+    
 
 
 
